@@ -1,8 +1,13 @@
-﻿using Clients.Database.Repositories;
+﻿using AutoMapper;
+using Clients.Database;
+using Clients.Database.Repositories;
+using Clients.Extensions;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,12 +26,18 @@ namespace Clients
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-			services.AddTransient<IRepository, EfRepository>();
+			services.AddControllers();
 
-            services.AddControllersWithViews();
+			services.AddDbContext<ClientContext>(options =>
+				options.UseSqlServer(Configuration.GetConnectionString("DbConnection")));
 
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
+
+			services.AddCoreUtilEfRepositories();
+			services.AddMediatR(typeof(Startup).Assembly);
+			services.AddAutoMapper(typeof(Startup).Assembly);
+
+			// In production, the React files will be served from this directory
+			services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "ClientApp/build";
             });

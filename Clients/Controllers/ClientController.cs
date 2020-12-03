@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Clients.CQRS.Commands;
+using Clients.CQRS.Queries;
+using Clients.Dtos;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -13,57 +17,117 @@ namespace Clients.Controllers
     public class ClientController : ControllerBase
     {
         private readonly IMediator _mediator;
+		private readonly ILogger<ClientController> _logger;
 
-        [HttpGet]
-        public async Task<ActionResult> Get()
+		public ClientController(IMediator mediator, ILogger<ClientController> logger)
+		{
+			_mediator = mediator;
+			_logger = logger;
+		}
+
+		[HttpGet]
+        public async Task<ActionResult<List<ClientDto>>> GetAll()
         {
             try
             {
+				var result = await _mediator.Send(new GetAllClientsRequest());
 
+				return Ok(result);
             }
-            catch(Exception ex)
-            {
+			catch (ArgumentException ex)
+			{
+				_logger.LogError(ex, "Bad Request Getting all clients");
+				return StatusCode(StatusCodes.Status400BadRequest);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error Getting ALl Clients");
+				return StatusCode(StatusCodes.Status500InternalServerError);
+			}
+		}
 
-            }
-        }
+		[HttpGet("{clientId:int}")]
+		public async Task<ActionResult> GetById(int clientId)
+		{
+			try
+			{
+				var result = await _mediator.Send(new GetAllClientsRequest());
 
-        [HttpPatch]
-        public IEnumerable<WeatherForecast> Update()
+				return Ok(result);
+			}
+			catch (ArgumentException ex)
+			{
+				_logger.LogError(ex, "Bad Request Getting all clients");
+				return StatusCode(StatusCodes.Status400BadRequest);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error Getting ALl Clients");
+				return StatusCode(StatusCodes.Status500InternalServerError);
+			}
+		}
+
+		[HttpPut]
+        public async Task<ActionResult<bool>> Update([FromBody] ClientDto client)
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
+			try
+			{
+				var result = await _mediator.Send(new UpdateClientRequest(client));
 
-        [HttpPut]
-        public async Task<IActionResult> Add()
-        {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
+				return Ok(true);
+			}
+			catch (ArgumentException ex)
+			{
+				_logger.LogError(ex, "Bad Request");
+				return StatusCode(StatusCodes.Status400BadRequest);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error");
+				return StatusCode(StatusCodes.Status500InternalServerError);
+			}
+		}
 
-        [HttpDelete]
-        public IEnumerable<WeatherForecast> Get()
+        [HttpPost]
+        public async Task<ActionResult<int>> Add([FromBody] ClientDto client)
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
+			try
+			{
+				var result = await _mediator.Send(new AddClientRequest(client));
+
+				return Ok(result);
+			}
+			catch (ArgumentException ex)
+			{
+				_logger.LogError(ex, "Bad Request");
+				return StatusCode(StatusCodes.Status400BadRequest);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error");
+				return StatusCode(StatusCodes.Status500InternalServerError);
+			}
+		}
+
+        [HttpDelete("{clientId:int}")]
+        public async Task<ActionResult<bool>> Delete(int clientId)
+        {
+			try
+			{
+				var result = await _mediator.Send(new DeleteClientRequest(clientId));
+
+				return Ok(true);
+			}
+			catch (ArgumentException ex)
+			{
+				_logger.LogError(ex, "Bad Request");
+				return StatusCode(StatusCodes.Status400BadRequest);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error");
+				return StatusCode(StatusCodes.Status500InternalServerError);
+			}
+		}
     }
 }
